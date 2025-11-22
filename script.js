@@ -115,13 +115,7 @@ function chargerBus() {
 				const object = FeedMessage.toObject(message, { longs: String, enums: String });
 
 				const entities = object.entity;
-
-				// On vérifie si ça a bougé
-				if (verifierMouvements(entities)) {
-					mettreAJourBus(entities);
-				} else {
-					console.log("💤 Aucun bus n'a bougé.");
-				}
+				mettreAJourBus(entities);
 			})
 			.catch((err) => console.error("Erreur récupération flux bus:", err));
 	});
