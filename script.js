@@ -24,7 +24,7 @@ map = L.map("map").setView([46.58, 0.33], 12);
 // Fond de carte (OpenStreetMap version claire)
 L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
 	attribution: "© OpenStreetMap contributors",
-	maxZoom: 19,
+	maxZoom: 21,
 }).addTo(map);
 
 // --- 3. DÉMARRAGE DE L'APPLICATION ---
@@ -66,7 +66,7 @@ function afficherFondDeCarte() {
 
 		L.circleMarker(info.pos, {
 			renderer: myRenderer,
-			radius: 2, // Tout petit
+			radius: 6,
 			color: "#888", // Contour gris
 			fillColor: "#aaa", // Remplissage gris clair
 			fillOpacity: 0.6,
@@ -129,64 +129,63 @@ function chargerBus() {
 
 // Place les bus sur la carte
 function mettreAJourBus(entities) {
-    // 1. On efface les anciens bus
-    for (let id in busMarkers) map.removeLayer(busMarkers[id]);
-    busMarkers = {};
+	// 1. On efface les anciens bus
+	for (let id in busMarkers) map.removeLayer(busMarkers[id]);
+	busMarkers = {};
 
-    if (!entities || entities.length === 0) return;
+	if (!entities || entities.length === 0) return;
 
-    let compteurBus = 0;
+	let compteurBus = 0;
 
-    entities.forEach((entity) => {
-        let routeId = null; // L'ID technique (ex: "201")
-        let pos = null;
-        let nomArret = "Inconnu";
-        let retard = 0;
-        let isGps = false;
-        let busId = entity.id;
+	entities.forEach((entity) => {
+		let routeId = null; // L'ID technique (ex: "201")
+		let pos = null;
+		let nomArret = "Inconnu";
+		let retard = 0;
+		let isGps = false;
+		let busId = entity.id;
 
-        // --- Récupération des données selon le type (GPS ou ESTIMÉ) ---
-        if (entity.tripUpdate) {
-            routeId = entity.tripUpdate.trip.routeId;
-            
-            // Récup position via arrêt
-            if (entity.tripUpdate.stopTimeUpdate?.length > 0) {
-                const nextStop = entity.tripUpdate.stopTimeUpdate[0];
-                const stopId = nextStop.stopId;
-                retard = nextStop.arrival ? nextStop.arrival.delay : 0;
-                const infoArret = ARRETS_MAPPING[stopId];
-                if (infoArret) {
-                    pos = infoArret.pos;
-                    nomArret = infoArret.nom;
-                    isGps = false;
-                }
-            }
-        } 
-        else if (entity.vehicle && entity.vehicle.position) {
-            routeId = entity.vehicle.trip.routeId;
-            const p = entity.vehicle.position;
-            pos = [p.latitude, p.longitude];
-            nomArret = "Position GPS";
-            isGps = true;
-        }
+		// --- Récupération des données selon le type (GPS ou ESTIMÉ) ---
+		if (entity.tripUpdate) {
+			routeId = entity.tripUpdate.trip.routeId;
 
-        // --- C'EST ICI QUE LA MAGIE OPÈRE ---
-        if (pos && routeId) {
-            // Par défaut, on affiche l'ID technique
-            let nomAffiche = routeId;
+			// Récup position via arrêt
+			if (entity.tripUpdate.stopTimeUpdate?.length > 0) {
+				const nextStop = entity.tripUpdate.stopTimeUpdate[0];
+				const stopId = nextStop.stopId;
+				retard = nextStop.arrival ? nextStop.arrival.delay : 0;
+				const infoArret = ARRETS_MAPPING[stopId];
+				if (infoArret) {
+					pos = infoArret.pos;
+					nomArret = infoArret.nom;
+					isGps = false;
+				}
+			}
+		} else if (entity.vehicle && entity.vehicle.position) {
+			routeId = entity.vehicle.trip.routeId;
+			const p = entity.vehicle.position;
+			pos = [p.latitude, p.longitude];
+			nomArret = "Position GPS";
+			isGps = true;
+		}
 
-            // Si on trouve la ligne dans notre fichier JSON, on prend son "name" (ex: "1")
-            if (LIGNES_MAPPING[routeId] && LIGNES_MAPPING[routeId].name) {
-                nomAffiche = LIGNES_MAPPING[routeId].name;
-            }
+		// --- C'EST ICI QUE LA MAGIE OPÈRE ---
+		if (pos && routeId) {
+			// Par défaut, on affiche l'ID technique
+			let nomAffiche = routeId;
 
-            // On appelle la création du marqueur avec le JOLI NOM
-            creerMarqueurBus(busId, pos, nomAffiche, nomArret, retard, isGps);
-            compteurBus++;
-        }
-    });
-    
-    console.log(`🚌 ${compteurBus} bus affichés.`);
+			// Si on trouve la ligne dans notre fichier JSON, on prend son "name" (ex: "1")
+			if (LIGNES_MAPPING[routeId] && LIGNES_MAPPING[routeId].name) {
+				nomAffiche = LIGNES_MAPPING[routeId].name;
+			}
+
+			// On appelle la création du marqueur avec le JOLI NOM
+			creerMarqueurBus(busId, pos, nomAffiche, nomArret, retard, isGps);
+			compteurBus++;
+		}
+	});
+
+	console.log(`🚌 ${compteurBus} bus affichés.`);
 }
 
 function creerMarqueurBus(id, coords, ligne, nomArret, retard, isGps) {
