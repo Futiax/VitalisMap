@@ -1,0 +1,32 @@
+/* style.css */
+
+/* On enlève les marges par défaut du navigateur */
+body {
+	margin: 0;
+	padding: 0;
+}
+
+/* La carte prend tout l'écran */
+#map {
+	height: 100vh;
+	width: 100%;
+}
+
+/* Style des marqueurs (ronds rouges) */
+.bus-marker {
+	background-color: #e30613; 
+	color: white;
+	border: 2px solid white;
+	border-radius: 50%;
+	text-align: center;
+	font-weight: bold;
+	box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+
+	/* Centrage du texte dans le rond */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	font-family: Arial, sans-serif;
+	font-size: 8px;
+}
