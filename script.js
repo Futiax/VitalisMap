@@ -22,7 +22,7 @@ let LIGNES_MAPPING = {};
 map = L.map("map").setView([46.58, 0.33], 12);
 
 // Fond de carte (OpenStreetMap version claire)
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 	attribution: "© OpenStreetMap contributors",
 	maxZoom: 21,
 }).addTo(map);
@@ -61,20 +61,35 @@ function afficherFondDeCarte() {
 	// On utilise un Canvas pour que ce soit performant avec 2000 points
 	const myRenderer = L.canvas({ padding: 0.5 });
 
-	for (const [id, info] of Object.entries(ARRETS_MAPPING)) {
-		// Info contient : { pos: [lat, lon], nom: "Nom Arrêt" }
+	function mettreAJourArrets() {
+		const zoomlevel = map._zoom; // Récupère le niveau de zoom actuel
+		map.eachLayer((layer) => {
+			if (layer instanceof L.CircleMarker) {
+				map.removeLayer(layer); // Supprime les anciens marqueurs
+			}
+		});
 
-		L.circleMarker(info.pos, {
-			renderer: myRenderer,
-			radius: 6,
-			color: "#888", // Contour gris
-			fillColor: "#aaa", // Remplissage gris clair
-			fillOpacity: 0.6,
-			weight: 1,
-		})
-			.bindPopup(`<b>Arrêt :</b> ${info.nom}<br><small>ID: ${id}</small>`)
-			.addTo(map);
+		if (zoomlevel > 13) {
+			for (const [id, info] of Object.entries(ARRETS_MAPPING)) {
+				L.circleMarker(info.pos, {
+					renderer: myRenderer,
+					radius: 6,
+					color: "#888", // Contour gris
+					fillColor: "#aaa", // Remplissage gris clair
+					fillOpacity: 0.6,
+					weight: 1,
+				})
+					.bindPopup(`<b>Arrêt :</b> ${info.nom}<br><small>ID: ${id}</small>`)
+					.addTo(map);
+			}
+		}
 	}
+
+	// Met à jour les arrêts au chargement initial
+	mettreAJourArrets();
+
+	// Ajoute un écouteur pour mettre à jour les arrêts lors des changements de zoom
+	map.on("zoomend", mettreAJourArrets);
 }
 
 function afficherLignes(lignesData) {
@@ -90,7 +105,16 @@ function afficherLignes(lignesData) {
 
 		// On ajoute une popup si on clique sur la ligne
 		polyline.bindPopup(`<b>Ligne ${info.name}</b>`);
-
+		polyline.on("mouseover", function () {
+			polyline.setStyle({ weight: 9 });
+			polyline.setStyle({ opacity: 1.0 });
+			polyline.bringToFront(); // Met la ligne au premier plan
+		});
+		polyline.on("mouseout", function () {
+			polyline.setStyle({ weight: 4 });
+			polyline.setStyle({ opacity: 0.6 });
+			polyline.bringToBack(); // Remet la ligne à l'arrière-plan
+		});
 		// IMPORTANT : On met les lignes tout au fond pour ne pas cacher les bus
 		polyline.bringToBack();
 	}
